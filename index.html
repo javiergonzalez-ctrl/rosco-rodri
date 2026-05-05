@@ -371,6 +371,40 @@
     letter-spacing: -0.01em;
   }
   .qc-answer.shown { opacity: 1; transform: translateY(0); }
+  .qc-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .qc-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .qc-input:focus { border-color: var(--pink); background: rgba(255, 255, 255, 0.1); }
+  .qc-input::placeholder { color: var(--text-dim); }
+  .qc-input:disabled { opacity: 0.5; }
+  .qc-btn.submit {
+    background: linear-gradient(135deg, var(--pink), var(--magenta));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 20px rgba(255, 45, 135, 0.35);
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+  .qc-btn.override {
+    background: rgba(52, 211, 153, 0.18);
+    color: var(--green);
+    border-color: rgba(52, 211, 153, 0.4);
+  }
   .qc-actions {
     display: flex;
     gap: 8px;
@@ -606,11 +640,14 @@
     <div class="qc-mode" id="qc-mode">Empieza por la A</div>
     <div class="qc-question" id="qc-question">Pulsa una letra para empezar</div>
     <div class="qc-answer" id="qc-answer">…</div>
+    <div class="qc-input-row">
+      <input class="qc-input" id="qc-input" type="text" autocomplete="off" autocapitalize="words" placeholder="Escribe tu respuesta…" />
+      <button class="qc-btn submit" id="btn-submit">Comprobar</button>
+    </div>
     <div class="qc-actions">
-      <button class="qc-btn reveal" id="btn-reveal">Ver respuesta</button>
-      <button class="qc-btn correct" id="btn-correct">Acierto</button>
-      <button class="qc-btn wrong" id="btn-wrong">Fallo</button>
       <button class="qc-btn skip" id="btn-skip">Pasapalabra</button>
+      <button class="qc-btn reveal" id="btn-reveal">No lo sé · Mostrar</button>
+      <button class="qc-btn override" id="btn-override" style="display:none;">Marcar como acierto</button>
     </div>
   </div>
 </div>
@@ -792,9 +829,88 @@
     $('qc-question').textContent = item.q;
     $('qc-answer').textContent = item.a;
     $('qc-answer').classList.remove('shown');
+    const input = $('qc-input');
+    input.value = '';
+    input.disabled = false;
+    $('btn-submit').disabled = false;
+    $('btn-override').style.display = 'none';
     const card = $('question-card');
     card.classList.remove('visible');
-    requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('visible')));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      card.classList.add('visible');
+      // focus input on desktop only (avoid keyboard popping on mobile auto)
+      if (window.matchMedia('(min-width: 700px)').matches) {
+        setTimeout(() => input.focus(), 250);
+      }
+    }));
+  }
+
+  // ---- Answer matching ----
+  function normalize(s) {
+    return s
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents
+      .replace(/[^a-z0-9ñ\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  function checkAnswer(guess, correct) {
+    const g = normalize(guess);
+    const c = normalize(correct);
+    if (!g) return false;
+    if (g === c) return true;
+    // token match: every significant token of correct must appear in guess
+    const stop = new Set(['de', 'la', 'el', 'los', 'las', 'un', 'una']);
+    const cTokens = c.split(' ').filter(t => t.length > 1 && !stop.has(t));
+    if (cTokens.length === 0) return g === c;
+    const gTokens = new Set(g.split(' '));
+    return cTokens.every(t => {
+      if (gTokens.has(t)) return true;
+      // allow close match for short tokens
+      for (const gt of gTokens) {
+        if (gt === t) return true;
+        if (t.length >= 4 && gt.length >= 4 && (gt.includes(t) || t.includes(gt))) return true;
+      }
+      return false;
+    });
+  }
+
+  function submitGuess() {
+    const i = state.current;
+    if (i === null) return;
+    const item = ROSCO[i];
+    const guess = $('qc-input').value;
+    if (!guess.trim()) return;
+    const ok = checkAnswer(guess, item.a);
+    $('qc-input').disabled = true;
+    $('btn-submit').disabled = true;
+    $('qc-answer').classList.add('shown');
+    if (ok) {
+      // small delay for suspense
+      setTimeout(() => markLetter('correct'), 700);
+    } else {
+      // show override option in case our normalizer is wrong
+      $('btn-override').style.display = 'inline-block';
+      setTimeout(() => markLetter('wrong'), 1400);
+    }
+  }
+
+  function overrideCorrect() {
+    // promote a wrong to correct
+    const i = state.current;
+    if (i === null) return;
+    if (state.status[i] === 'wrong') {
+      state.wrong = Math.max(0, state.wrong - 1);
+      const el = getLetterEl(i);
+      el.classList.remove('wrong');
+      state.status[i] = 'correct';
+      state.correct++;
+      el.classList.add('correct', 'flip');
+      setTimeout(() => el.classList.remove('flip'), 700);
+      sfx.correct();
+      refreshStats();
+      tryShowImage(i, () => {});
+    }
   }
 
   function markLetter(status) {
@@ -986,20 +1102,19 @@
   buildRosco();
   $('btn-start').addEventListener('click', startGame);
   $('player-input').addEventListener('keydown', e => { if (e.key === 'Enter') startGame(); });
-  $('btn-correct').addEventListener('click', () => markLetter('correct'));
-  $('btn-wrong').addEventListener('click', () => markLetter('wrong'));
+  $('btn-submit').addEventListener('click', submitGuess);
   $('btn-skip').addEventListener('click', () => markLetter('skipped'));
-  $('btn-reveal').addEventListener('click', () => $('qc-answer').classList.add('shown'));
-  $('btn-restart').addEventListener('click', restart);
-
-  // Keyboard shortcuts
-  window.addEventListener('keydown', e => {
-    if (!state.started || screenEnd.classList.contains('hidden') === false) return;
-    if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'a') markLetter('correct');
-    else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'f') markLetter('wrong');
-    else if (e.key === ' ' || e.key.toLowerCase() === 'p') { e.preventDefault(); markLetter('skipped'); }
-    else if (e.key.toLowerCase() === 'r') $('qc-answer').classList.add('shown');
+  $('btn-reveal').addEventListener('click', () => {
+    $('qc-answer').classList.add('shown');
+    $('qc-input').disabled = true;
+    $('btn-submit').disabled = true;
+    setTimeout(() => markLetter('wrong'), 1400);
   });
+  $('btn-override').addEventListener('click', overrideCorrect);
+  $('qc-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); submitGuess(); }
+  });
+  $('btn-restart').addEventListener('click', restart);
 </script>
 </body>
 </html>
