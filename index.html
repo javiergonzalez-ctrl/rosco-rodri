@@ -39,9 +39,17 @@
     overscroll-behavior: none;
   }
   button, input { font-family: inherit; }
-  /* Disable hover effects on touch — they stick after tap on iOS */
+  /* Disable hover effects on touch — they stick after tap on iOS.
+     IMPORTANT: .letter uses transform: translate(-50%,-50%) for centering,
+     so we reset only the scale, not the translate. */
   @media (hover: none) {
-    .btn-primary:hover, .letter:hover, .qc-btn:hover { transform: none; filter: none; box-shadow: inherit; }
+    .btn-primary:hover { transform: none; filter: none; }
+    .qc-btn:hover { transform: none; filter: none; }
+    .letter:hover {
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
   }
   body {
     position: relative;
@@ -582,16 +590,18 @@
       max-height: 420px;
       flex-shrink: 0;
     }
-    /* radius adjusted in JS via CSS var so letters don't overlap on small circles */
+    /* 27 letters around radius 44% -> arc between centers = ~10.24% of circle width.
+       Letter width must stay <= 10% to avoid overlap. */
     .letter {
-      min-width: 36px;
-      min-height: 36px;
-      width: 12.5%;
-      height: 12.5%;
-      font-size: 15px;
+      min-width: 30px;
+      min-height: 30px;
+      width: 10%;
+      height: 10%;
+      font-size: 13px;
       border-width: 1px;
     }
-    .letter:active { transform: translate(-50%, -50%) scale(0.92); }
+    .letter:active { transform: translate(-50%, -50%) scale(0.9); }
+    .letter.current:active { transform: translate(-50%, -50%) scale(0.95); }
     .player-avatar {
       width: 38%;
       height: 38%;
@@ -658,15 +668,16 @@
     .img-overlay .img-card { gap: 16px; padding: 16px; }
     .img-overlay .img-hint { font-size: 10px; }
   }
-  /* Very small (iPhone SE) */
+  /* Very small (iPhone SE 320-375px) */
   @media (max-width: 380px) {
-    .letter { font-size: 13px; min-width: 32px; min-height: 32px; }
+    .letter { font-size: 12px; min-width: 26px; min-height: 26px; }
     .qc-btn { font-size: 11px; padding: 11px 6px; }
     .player-avatar { width: 36%; height: 36%; }
     .topbar { padding-left: 8px; padding-right: 8px; }
     .topbar .player-tag { font-size: 10px; padding: 6px 10px; }
     .stat-pill { padding: 5px 8px; }
     .stat-pill .value { font-size: 13px; }
+    .stat-pill .label { font-size: 8px; }
   }
   /* Landscape phones — short height */
   @media (max-height: 500px) and (orientation: landscape) {
