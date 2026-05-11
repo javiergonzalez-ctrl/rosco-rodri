@@ -25,7 +25,7 @@
     --glass: rgba(255, 255, 255, 0.06);
     --glass-border: rgba(255, 255, 255, 0.12);
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   html, body {
     height: 100%;
     overflow: hidden;
@@ -33,7 +33,15 @@
     color: var(--text);
     background: var(--bg-0);
     user-select: none;
+    -webkit-user-select: none;
     -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
+  }
+  button, input { font-family: inherit; }
+  /* Disable hover effects on touch — they stick after tap on iOS */
+  @media (hover: none) {
+    .btn-primary:hover, .letter:hover, .qc-btn:hover { transform: none; filter: none; box-shadow: inherit; }
   }
   body {
     position: relative;
@@ -543,48 +551,55 @@
 
   /* Responsive — iPhone first */
   @media (max-width: 700px) {
-    body { overflow: auto; }
+    html, body { height: auto; min-height: 100%; }
+    body { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
     .topbar {
-      padding: calc(env(safe-area-inset-top) + 10px) 12px 10px;
-      flex-wrap: wrap;
+      padding: calc(env(safe-area-inset-top) + 8px) 12px 8px;
       gap: 8px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
     }
-    .topbar .player-tag { padding: 6px 12px; font-size: 11px; }
-    .topbar .stats { gap: 6px; flex-wrap: wrap; }
-    .stat-pill { padding: 5px 9px; border-radius: 10px; }
-    .stat-pill .value { font-size: 14px; }
+    .topbar .player-tag { padding: 7px 12px; font-size: 11px; }
+    .topbar .stats { gap: 6px; justify-content: flex-end; }
+    .stat-pill { padding: 6px 9px; border-radius: 12px; min-width: 0; }
+    .stat-pill .value { font-size: 14px; line-height: 1; }
     .stat-pill .label { font-size: 9px; }
 
     .game-wrapper {
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: 76px 8px 24px;
+      padding: calc(env(safe-area-inset-top) + 70px) 8px 16px;
       min-height: 100vh;
       min-height: 100dvh;
-      gap: 16px;
+      gap: 14px;
     }
     .rosco {
-      width: min(82vw, 78vh);
-      height: min(82vw, 78vh);
+      width: min(86vw, 70vh);
+      height: min(86vw, 70vh);
       max-width: 420px;
       max-height: 420px;
       flex-shrink: 0;
     }
+    /* radius adjusted in JS via CSS var so letters don't overlap on small circles */
     .letter {
-      min-width: 32px;
-      min-height: 32px;
-      font-size: 14px;
+      min-width: 36px;
+      min-height: 36px;
+      width: 12.5%;
+      height: 12.5%;
+      font-size: 15px;
       border-width: 1px;
     }
+    .letter:active { transform: translate(-50%, -50%) scale(0.92); }
     .player-avatar {
-      width: 48%;
-      height: 48%;
+      width: 38%;
+      height: 38%;
     }
     .player-avatar .qc-letter-overlay {
-      width: 48px;
-      height: 48px;
-      font-size: 22px;
+      width: 44px;
+      height: 44px;
+      font-size: 20px;
       border-width: 2px;
       bottom: -4px;
       right: -4px;
@@ -595,7 +610,7 @@
       transform: none;
       bottom: auto;
       left: auto;
-      padding: 14px 14px 14px;
+      padding: 14px;
       width: 100%;
       max-width: 460px;
       box-sizing: border-box;
@@ -605,14 +620,14 @@
     .question-card.visible { transform: none; }
     .qc-mode { font-size: 10px; margin-bottom: 6px; }
     .qc-question { font-size: 15px; line-height: 1.35; margin-bottom: 10px; }
-    .qc-answer { font-size: 18px; margin-bottom: 12px; }
+    .qc-answer { font-size: 18px; margin-bottom: 12px; min-height: 22px; }
     .qc-input-row {
       flex-direction: column;
       gap: 6px;
       margin-bottom: 8px;
     }
-    .qc-input { font-size: 16px; padding: 11px 14px; width: 100%; box-sizing: border-box; }
-    .qc-btn.submit { min-width: 0; width: 100%; padding: 12px; font-size: 14px; }
+    .qc-input { font-size: 16px; padding: 12px 14px; width: 100%; box-sizing: border-box; min-height: 44px; }
+    .qc-btn.submit { min-width: 0; width: 100%; padding: 13px; font-size: 14px; min-height: 44px; }
     .qc-actions {
       gap: 6px;
       display: grid;
@@ -622,25 +637,56 @@
     .qc-actions .qc-btn { width: 100%; min-width: 0; }
     .qc-btn {
       font-size: 12px;
-      padding: 11px 8px;
-      border-radius: 10px;
+      padding: 12px 8px;
+      border-radius: 12px;
       box-sizing: border-box;
+      min-height: 44px;
     }
-    .qc-btn:hover { transform: none; }
+    .qc-btn:active { transform: scale(0.96); }
 
-    #screen-start h1 { font-size: 44px; }
-    #screen-start .subtitle { font-size: 14px; padding: 0 12px; }
+    #screen-start h1 { font-size: clamp(40px, 12vw, 56px); }
+    #screen-start .subtitle { font-size: 14px; padding: 0 16px; }
+    #screen-start .player-name { width: min(280px, calc(100vw - 48px)); }
+    .btn-primary { padding: 16px 36px; font-size: 16px; min-height: 52px; }
     #screen-end .end-card { padding: 28px 20px; max-width: calc(100vw - 24px); }
+    .score-grid { gap: 10px; }
+    .score-grid .cell { padding: 14px 8px; }
     .score-grid .cell .num { font-size: 26px; }
 
     .img-overlay img { max-height: 55vh; border-radius: 18px; }
-    .img-overlay .img-caption { font-size: 22px; }
+    .img-overlay .img-caption .cap-answer { font-size: clamp(24px, 7vw, 38px); }
+    .img-overlay .img-card { gap: 16px; padding: 16px; }
+    .img-overlay .img-hint { font-size: 10px; }
   }
-  /* Very small (iPhone SE, mini in landscape) */
+  /* Very small (iPhone SE) */
   @media (max-width: 380px) {
-    .letter { font-size: 12px; min-width: 28px; min-height: 28px; }
-    .qc-btn { font-size: 11px; padding: 9px 6px; }
-    .topbar .stats { width: 100%; justify-content: flex-end; }
+    .letter { font-size: 13px; min-width: 32px; min-height: 32px; }
+    .qc-btn { font-size: 11px; padding: 11px 6px; }
+    .player-avatar { width: 36%; height: 36%; }
+    .topbar { padding-left: 8px; padding-right: 8px; }
+    .topbar .player-tag { font-size: 10px; padding: 6px 10px; }
+    .stat-pill { padding: 5px 8px; }
+    .stat-pill .value { font-size: 13px; }
+  }
+  /* Landscape phones — short height */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .game-wrapper {
+      flex-direction: row;
+      padding: 8px 8px 8px max(env(safe-area-inset-left), 8px);
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    .topbar { padding: 6px 12px; }
+    .rosco { width: min(92vh, 50vw); height: min(92vh, 50vw); max-width: 380px; max-height: 380px; }
+    .question-card { position: static; transform: none; width: min(46vw, 360px); max-width: none; margin: 0; }
+    .question-card.visible { transform: none; }
+    #screen-start h1 { font-size: clamp(32px, 7vw, 56px); }
+    #screen-start .subtitle { margin-top: 8px; }
+    #screen-start .player-name { margin-top: 16px; }
+    .btn-primary { margin-top: 16px; }
   }
 </style>
 </head>
@@ -811,8 +857,23 @@
     return document.querySelector('.letter[data-idx="' + i + '"]');
   }
 
+  // ---- Haptics (Android / future iOS) ----
+  function haptic(pattern) {
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+  }
+
   // ---- Sound (WebAudio, no external) ----
   let audioCtx;
+  function unlockAudio() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) {}
+  }
+  // Unlock on first user gesture (iOS requirement)
+  ['pointerdown', 'touchstart', 'keydown'].forEach(ev =>
+    window.addEventListener(ev, unlockAudio, { once: true, passive: true })
+  );
   function beep(freq, dur = 0.12, type = 'sine', vol = 0.15) {
     try {
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
@@ -828,11 +889,11 @@
     } catch (e) {}
   }
   const sfx = {
-    click: () => beep(880, 0.06, 'square', 0.08),
-    correct: () => { beep(880, 0.1, 'triangle', 0.18); setTimeout(() => beep(1320, 0.18, 'triangle', 0.18), 90); },
-    wrong: () => { beep(220, 0.18, 'sawtooth', 0.18); setTimeout(() => beep(160, 0.22, 'sawtooth', 0.18), 90); },
-    skip: () => beep(660, 0.12, 'triangle', 0.15),
-    win: () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.18, 'triangle', 0.2), i * 130)); }
+    click: () => { beep(880, 0.06, 'square', 0.08); haptic(8); },
+    correct: () => { beep(880, 0.1, 'triangle', 0.18); setTimeout(() => beep(1320, 0.18, 'triangle', 0.18), 90); haptic([14, 40, 14]); },
+    wrong: () => { beep(220, 0.18, 'sawtooth', 0.18); setTimeout(() => beep(160, 0.22, 'sawtooth', 0.18), 90); haptic([40, 40, 40]); },
+    skip: () => { beep(660, 0.12, 'triangle', 0.15); haptic(20); },
+    win: () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.18, 'triangle', 0.2), i * 130)); haptic([20, 60, 20, 60, 40]); }
   };
 
   // ---- Game flow ----
@@ -1030,11 +1091,13 @@
         if (!armed) return;
         overlay.classList.remove('visible');
         overlay.removeEventListener('click', dismiss);
+        overlay.removeEventListener('touchstart', dismiss);
         window.removeEventListener('keydown', keyDismiss);
         setTimeout(done, 400);
       };
       const keyDismiss = (e) => { e.preventDefault(); dismiss(); };
       overlay.addEventListener('click', dismiss);
+      overlay.addEventListener('touchstart', dismiss, { passive: true });
       window.addEventListener('keydown', keyDismiss);
     });
   }
@@ -1148,8 +1211,28 @@
     else particles._raf = false;
   }
 
+  // ---- Preload images in background so reveal is instant ----
+  function preloadImages() {
+    ROSCO.forEach((item, idx) => {
+      // stagger slightly so initial render isn't choked
+      setTimeout(() => findImage(item.l), idx * 30);
+    });
+  }
+
+  // ---- Keep input visible above iOS keyboard ----
+  function wireInputKeyboard() {
+    const input = $('qc-input');
+    input.addEventListener('focus', () => {
+      setTimeout(() => {
+        try { input.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+      }, 300);
+    });
+  }
+
   // ---- Wire up ----
   buildRosco();
+  preloadImages();
+  wireInputKeyboard();
   $('btn-start').addEventListener('click', startGame);
   $('player-input').addEventListener('keydown', e => { if (e.key === 'Enter') startGame(); });
   $('btn-submit').addEventListener('click', submitGuess);
