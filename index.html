@@ -599,14 +599,18 @@
       width: auto;
       overflow: hidden;
     }
+    /* Rosco sized off viewport (not off grid 1fr) so card height changes
+       don't trigger a re-layout cascade on every tap. */
     .rosco {
-      width: min(86vw, 100%);
-      height: auto;
+      width: min(86vw, 50svh);
+      height: min(86vw, 50svh);
       aspect-ratio: 1 / 1;
       max-width: 420px;
-      max-height: 100%;
-      flex-shrink: 1;
+      flex-shrink: 0;
     }
+    /* Hide the letter badge inside the avatar on mobile — redundant with
+       the card's "EMPIEZA POR LA X" text and visually noisy. */
+    .player-avatar .qc-letter-overlay { display: none; }
     /* 27 letters around radius 44% -> arc between centers = ~10.24% of circle width.
        Letter width must stay <= 10% to avoid overlap. */
     .letter {
