@@ -559,24 +559,28 @@
 
   /* Responsive — iPhone first */
   @media (max-width: 700px) {
-    /* Make #screen-game the scrollable container; stack rosco + card top-down */
+    /* Grid layout: [topbar] / [rosco centered in available space] / [card] */
     #screen-game {
-      justify-content: flex-start;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas: "top" "main" "card";
       align-items: stretch;
-      overflow-y: auto;
-      overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior: contain;
+      justify-items: stretch;
+      padding: 0;
+      overflow: hidden;
     }
     .topbar {
-      padding: calc(env(safe-area-inset-top) + 8px) 12px 8px;
+      position: static;
+      grid-area: top;
+      padding: calc(env(safe-area-inset-top) + 8px) 12px 10px;
       gap: 8px;
       display: grid;
       grid-template-columns: auto 1fr;
       align-items: center;
-      background: linear-gradient(180deg, rgba(5,5,7,0.85) 0%, rgba(5,5,7,0.55) 70%, transparent 100%);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(5,5,7,0.6);
+      backdrop-filter: blur(14px) saturate(160%);
+      -webkit-backdrop-filter: blur(14px) saturate(160%);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .topbar .player-tag { padding: 7px 12px; font-size: 11px; }
     .topbar .stats { gap: 6px; justify-content: flex-end; }
@@ -585,21 +589,23 @@
     .stat-pill .label { font-size: 9px; }
 
     .game-wrapper {
+      grid-area: main;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      padding: calc(env(safe-area-inset-top) + 96px) 8px 8px;
+      justify-content: center;
+      padding: 8px;
       height: auto;
       min-height: 0;
-      flex-shrink: 0;
-      gap: 14px;
+      width: auto;
+      overflow: hidden;
     }
     .rosco {
-      width: min(86vw, 70vh);
-      height: min(86vw, 70vh);
+      width: min(86vw, 100%);
+      height: auto;
+      aspect-ratio: 1 / 1;
       max-width: 420px;
-      max-height: 420px;
-      flex-shrink: 0;
+      max-height: 100%;
+      flex-shrink: 1;
     }
     /* 27 letters around radius 44% -> arc between centers = ~10.24% of circle width.
        Letter width must stay <= 10% to avoid overlap. */
@@ -628,6 +634,7 @@
 
     .question-card {
       position: static;
+      grid-area: card;
       transform: none;
       bottom: auto;
       left: auto;
@@ -636,8 +643,10 @@
       max-width: 460px;
       box-sizing: border-box;
       border-radius: 18px;
-      margin: 0 auto max(env(safe-area-inset-bottom), 16px);
+      margin: 0 auto max(env(safe-area-inset-bottom), 12px);
       flex-shrink: 0;
+      align-self: end;
+      justify-self: center;
     }
     .question-card.visible { transform: none; }
     .qc-mode { font-size: 10px; margin-bottom: 6px; }
@@ -691,21 +700,23 @@
     .stat-pill .value { font-size: 13px; }
     .stat-pill .label { font-size: 8px; }
   }
-  /* Landscape phones — short height */
+  /* Landscape phones — short height: rosco + card side by side */
   @media (max-height: 500px) and (orientation: landscape) {
-    .game-wrapper {
-      flex-direction: row;
-      padding: 8px 8px 8px max(env(safe-area-inset-left), 8px);
-      gap: 12px;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      min-height: 100dvh;
+    #screen-game {
+      grid-template-rows: auto 1fr;
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas: "top top" "main card";
     }
-    .topbar { padding: 6px 12px; }
-    .rosco { width: min(92vh, 50vw); height: min(92vh, 50vw); max-width: 380px; max-height: 380px; }
-    .question-card { position: static; transform: none; width: min(46vw, 360px); max-width: none; margin: 0; }
-    .question-card.visible { transform: none; }
+    .topbar { padding: calc(env(safe-area-inset-top) + 4px) 12px 4px; }
+    .game-wrapper { padding: 6px; }
+    .rosco { width: auto; height: auto; max-width: 100%; max-height: 100%; }
+    .question-card {
+      align-self: center;
+      justify-self: stretch;
+      margin: 6px 12px;
+      width: auto;
+      max-width: none;
+    }
     #screen-start h1 { font-size: clamp(32px, 7vw, 56px); }
     #screen-start .subtitle { margin-top: 8px; }
     #screen-start .player-name { margin-top: 16px; }
