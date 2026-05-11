@@ -888,10 +888,65 @@
       osc.stop(audioCtx.currentTime + dur);
     } catch (e) {}
   }
+  // "Sad trombone" — 4 descending notes with vibrato + brass-y sawtooth
+  function sadTrombone() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = audioCtx;
+      const t0 = ctx.currentTime;
+      // descending notes (Hz) and their start offsets (s)
+      const notes = [
+        { f: 311, t: 0.00, d: 0.22 },  // Eb4
+        { f: 277, t: 0.20, d: 0.22 },  // C#4
+        { f: 233, t: 0.40, d: 0.24 },  // Bb3
+        { f: 196, t: 0.60, d: 0.55 }   // G3 (long, with bend)
+      ];
+      const master = ctx.createGain();
+      master.gain.value = 0.22;
+      master.connect(ctx.destination);
+      notes.forEach((n, i) => {
+        const start = t0 + n.t;
+        const end = start + n.d;
+        // saw + slight detuned saw = brass
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        osc1.type = 'sawtooth'; osc2.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(n.f, start);
+        osc2.frequency.setValueAtTime(n.f * 1.005, start);
+        // pitch bend down on the last note (the "waaah")
+        if (i === notes.length - 1) {
+          osc1.frequency.exponentialRampToValueAtTime(n.f * 0.78, end);
+          osc2.frequency.exponentialRampToValueAtTime(n.f * 0.78 * 1.005, end);
+        }
+        // vibrato
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        lfo.frequency.value = 5.5;
+        lfoGain.gain.value = n.f * 0.015;
+        lfo.connect(lfoGain).connect(osc1.frequency);
+        lfo.connect(lfoGain).connect(osc2.frequency);
+        // amp envelope
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.5, start + 0.03);
+        g.gain.setValueAtTime(0.5, end - 0.08);
+        g.gain.exponentialRampToValueAtTime(0.0001, end);
+        // gentle lowpass for warmth
+        const lp = ctx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = 1600;
+        osc1.connect(lp); osc2.connect(lp);
+        lp.connect(g).connect(master);
+        osc1.start(start); osc2.start(start); lfo.start(start);
+        osc1.stop(end + 0.02); osc2.stop(end + 0.02); lfo.stop(end + 0.02);
+      });
+    } catch (e) {}
+  }
+
   const sfx = {
     click: () => { beep(880, 0.06, 'square', 0.08); haptic(8); },
     correct: () => { beep(880, 0.1, 'triangle', 0.18); setTimeout(() => beep(1320, 0.18, 'triangle', 0.18), 90); haptic([14, 40, 14]); },
-    wrong: () => { beep(220, 0.18, 'sawtooth', 0.18); setTimeout(() => beep(160, 0.22, 'sawtooth', 0.18), 90); haptic([40, 40, 40]); },
+    wrong: () => { sadTrombone(); haptic([60, 60, 60, 60, 120]); },
     skip: () => { beep(660, 0.12, 'triangle', 0.15); haptic(20); },
     win: () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.18, 'triangle', 0.2), i * 130)); haptic([20, 60, 20, 60, 40]); }
   };
