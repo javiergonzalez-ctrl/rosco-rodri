@@ -556,16 +556,20 @@
     .stat-pill .label { font-size: 9px; }
 
     .game-wrapper {
-      align-items: flex-start;
-      padding-top: 76px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 76px 8px 24px;
       min-height: 100vh;
       min-height: 100dvh;
+      gap: 16px;
     }
     .rosco {
-      width: 95vw;
-      height: 95vw;
-      max-width: 460px;
-      max-height: 460px;
+      width: min(82vw, 78vh);
+      height: min(82vw, 78vh);
+      max-width: 420px;
+      max-height: 420px;
+      flex-shrink: 0;
     }
     .letter {
       min-width: 32px;
@@ -587,13 +591,18 @@
     }
 
     .question-card {
-      bottom: max(env(safe-area-inset-bottom), 14px);
+      position: static;
+      transform: none;
+      bottom: auto;
+      left: auto;
       padding: 14px 14px 14px;
-      width: calc(100vw - 16px);
-      max-width: calc(100vw - 16px);
+      width: 100%;
+      max-width: 460px;
       box-sizing: border-box;
       border-radius: 18px;
+      margin-bottom: max(env(safe-area-inset-bottom), 12px);
     }
+    .question-card.visible { transform: none; }
     .qc-mode { font-size: 10px; margin-bottom: 6px; }
     .qc-question { font-size: 15px; line-height: 1.35; margin-bottom: 10px; }
     .qc-answer { font-size: 18px; margin-bottom: 12px; }
@@ -839,8 +848,14 @@
 
   function onLetterClick(i) {
     if (!state.started) return;
-    if (state.status[i] !== 'pending' && state.status[i] !== 'skipped') return;
     sfx.click();
+    const st = state.status[i];
+    if (st === 'correct' || st === 'wrong') {
+      // Re-mostrar la foto de una letra ya respondida sin cambiar su estado
+      state.current = i;
+      tryShowImage(i, () => {});
+      return;
+    }
     goToLetter(i);
   }
 
