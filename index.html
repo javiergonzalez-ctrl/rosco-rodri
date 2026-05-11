@@ -1035,6 +1035,7 @@
     input.value = '';
     input.disabled = false;
     $('btn-submit').disabled = false;
+    $('btn-reveal').disabled = false;
     $('btn-override').style.display = 'none';
     const card = $('question-card');
     card.classList.remove('visible');
@@ -1171,9 +1172,18 @@
   function tryShowImage(idx, done) {
     const item = ROSCO[idx];
     findImage(item.l).then(url => {
-      if (!url) { setTimeout(done, 200); return; }
       const overlay = $('img-overlay');
-      $('img-overlay-img').src = url;
+      const imgEl = $('img-overlay-img');
+      if (url) {
+        imgEl.src = url;
+        imgEl.style.display = '';
+      } else {
+        // Graceful fallback: no photo for this letter -> still show overlay
+        // with the answer, just hide the <img>. (Saw this with letter G.)
+        imgEl.removeAttribute('src');
+        imgEl.style.display = 'none';
+        console.warn('[rosco] missing image for letter', item.l);
+      }
       $('img-overlay-letter').textContent = item.l + ' · Letra ' + item.l;
       $('img-overlay-caption').textContent = item.a;
       overlay.classList.add('visible');
@@ -1331,6 +1341,9 @@
   $('btn-submit').addEventListener('click', submitGuess);
   $('btn-skip').addEventListener('click', () => markLetter('skipped'));
   $('btn-reveal').addEventListener('click', () => {
+    const btn = $('btn-reveal');
+    if (btn.disabled) return;
+    btn.disabled = true;
     $('qc-answer').classList.add('shown');
     $('qc-input').disabled = true;
     $('btn-submit').disabled = true;
