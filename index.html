@@ -480,49 +480,65 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.78);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: radial-gradient(ellipse at center, rgba(20,20,30,0.92) 0%, rgba(0,0,0,0.98) 70%);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.35s;
+    transition: opacity 0.4s ease;
   }
   .img-overlay.visible { opacity: 1; pointer-events: auto; }
   .img-overlay .img-card {
     position: relative;
-    max-width: min(90vw, 720px);
-    max-height: 85vh;
+    max-width: min(92vw, 760px);
+    max-height: 92vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 18px;
-    transform: scale(0.85) rotate(-2deg);
-    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    gap: 22px;
+    transform: scale(0.88) translateY(20px);
+    opacity: 0;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
   }
-  .img-overlay.visible .img-card { transform: scale(1) rotate(0deg); }
+  .img-overlay.visible .img-card { transform: scale(1) translateY(0); opacity: 1; }
   .img-overlay img {
     max-width: 100%;
-    max-height: 65vh;
-    border-radius: 24px;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 0 4px rgba(255, 255, 255, 0.1);
+    max-height: 68vh;
+    border-radius: 20px;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.08), 0 0 80px rgba(46,200,131,0.15);
     object-fit: contain;
   }
   .img-overlay .img-caption {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
     text-align: center;
-    font-size: clamp(20px, 3vw, 36px);
+  }
+  .img-overlay .img-caption .cap-letter {
+    font-size: clamp(14px, 1.6vw, 18px);
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.55);
+  }
+  .img-overlay .img-caption .cap-answer {
+    font-size: clamp(28px, 4.2vw, 52px);
     font-weight: 800;
-    background: linear-gradient(135deg, var(--green), var(--cyan));
+    background: linear-gradient(135deg, #ffffff 0%, #d8e8ff 60%, var(--cyan) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     letter-spacing: -0.02em;
+    line-height: 1.05;
   }
   .img-overlay .img-hint {
-    color: var(--text-dim);
-    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    font-size: 11px;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.18em;
+    margin-top: 4px;
   }
 
   /* Responsive — iPhone first */
@@ -685,8 +701,11 @@
 <div class="img-overlay" id="img-overlay">
   <div class="img-card">
     <img id="img-overlay-img" alt="" />
-    <div class="img-caption" id="img-overlay-caption"></div>
-    <div class="img-hint">Click o cualquier tecla para continuar</div>
+    <div class="img-caption">
+      <div class="cap-letter" id="img-overlay-letter"></div>
+      <div class="cap-answer" id="img-overlay-caption"></div>
+    </div>
+    <div class="img-hint">Toca o pulsa cualquier tecla para continuar</div>
   </div>
 </div>
 
@@ -986,20 +1005,22 @@
       if (!url) { setTimeout(done, 200); return; }
       const overlay = $('img-overlay');
       $('img-overlay-img').src = url;
+      $('img-overlay-letter').textContent = item.l + ' · Letra ' + item.l;
       $('img-overlay-caption').textContent = item.a;
       overlay.classList.add('visible');
       fireConfetti();
+      let armed = false;
+      setTimeout(() => { armed = true; }, 500);
       const dismiss = () => {
+        if (!armed) return;
         overlay.classList.remove('visible');
         overlay.removeEventListener('click', dismiss);
         window.removeEventListener('keydown', keyDismiss);
-        clearTimeout(autoTimer);
-        setTimeout(done, 300);
+        setTimeout(done, 400);
       };
       const keyDismiss = (e) => { e.preventDefault(); dismiss(); };
       overlay.addEventListener('click', dismiss);
       window.addEventListener('keydown', keyDismiss);
-      const autoTimer = setTimeout(dismiss, 3500);
     });
   }
 
