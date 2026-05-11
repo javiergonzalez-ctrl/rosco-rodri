@@ -1142,6 +1142,11 @@
   }
 
   // ---- Image overlay on correct ----
+  // Per-letter URL overrides (hotlinked from source, not rehosted).
+  const IMG_OVERRIDES = {
+    'F': 'https://images.theconversation.com/files/454360/original/file-20220325-19-7w87s0.jpg?ixlib=rb-4.1.0&q=45&auto=format&w=1000&fit=clip',
+    'G': 'https://s1.abcstatics.com/media/deportes/2021/06/16/cabezazo-ramos_20210616222110-U80143307716mIf-1248x698@abc.jpg'
+  };
   // For each letter, we look for ./images/{LETTER}.{ext} in this order.
   const IMG_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
   const imgCache = {}; // letter -> resolved url or false
@@ -1149,6 +1154,10 @@
   function findImage(letter) {
     if (imgCache[letter] !== undefined) {
       return Promise.resolve(imgCache[letter]);
+    }
+    if (IMG_OVERRIDES[letter]) {
+      imgCache[letter] = IMG_OVERRIDES[letter];
+      return Promise.resolve(IMG_OVERRIDES[letter]);
     }
     const safe = letter === 'Ñ' ? 'N_TILDE' : letter;
     const candidates = [];
