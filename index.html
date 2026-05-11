@@ -1122,7 +1122,8 @@
     $('qc-answer').classList.add('shown');
     $('qc-input').disabled = true;
     $('btn-submit').disabled = true;
-    setTimeout(() => markLetter('wrong'), 1400);
+    const i = state.current;
+    setTimeout(() => tryShowImage(i, () => markLetter('wrong')), 800);
   });
   $('btn-override').addEventListener('click', overrideCorrect);
   $('qc-input').addEventListener('keydown', e => {
