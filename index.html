@@ -1174,34 +1174,53 @@
     findImage(item.l).then(url => {
       const overlay = $('img-overlay');
       const imgEl = $('img-overlay-img');
+      $('img-overlay-letter').textContent = item.l + ' · Letra ' + item.l;
+      $('img-overlay-caption').textContent = item.a;
+
+      const reveal = () => {
+        overlay.classList.add('visible');
+        fireConfetti();
+        let armed = false;
+        setTimeout(() => { armed = true; }, 500);
+        const dismiss = () => {
+          if (!armed) return;
+          overlay.classList.remove('visible');
+          overlay.removeEventListener('click', dismiss);
+          overlay.removeEventListener('touchstart', dismiss);
+          window.removeEventListener('keydown', keyDismiss);
+          setTimeout(done, 400);
+        };
+        const keyDismiss = (e) => { e.preventDefault(); dismiss(); };
+        overlay.addEventListener('click', dismiss);
+        overlay.addEventListener('touchstart', dismiss, { passive: true });
+        window.addEventListener('keydown', keyDismiss);
+      };
+
       if (url) {
-        imgEl.src = url;
         imgEl.style.display = '';
+        // Wait for the new image to actually load before opening the overlay,
+        // otherwise the previous letter's photo flashes for a frame.
+        const sameSrc = imgEl.src && imgEl.src.endsWith(url);
+        if (sameSrc && imgEl.complete && imgEl.naturalWidth > 0) {
+          reveal();
+        } else {
+          imgEl.onload = () => { imgEl.onload = imgEl.onerror = null; reveal(); };
+          imgEl.onerror = () => {
+            imgEl.onload = imgEl.onerror = null;
+            imgEl.style.display = 'none';
+            reveal();
+          };
+          // Hide briefly while the new one loads — beats showing the prev one
+          imgEl.style.visibility = 'hidden';
+          imgEl.src = url;
+          imgEl.addEventListener('load', () => { imgEl.style.visibility = ''; }, { once: true });
+        }
       } else {
-        // Graceful fallback: no photo for this letter -> still show overlay
-        // with the answer, just hide the <img>. (Saw this with letter G.)
         imgEl.removeAttribute('src');
         imgEl.style.display = 'none';
         console.warn('[rosco] missing image for letter', item.l);
+        reveal();
       }
-      $('img-overlay-letter').textContent = item.l + ' · Letra ' + item.l;
-      $('img-overlay-caption').textContent = item.a;
-      overlay.classList.add('visible');
-      fireConfetti();
-      let armed = false;
-      setTimeout(() => { armed = true; }, 500);
-      const dismiss = () => {
-        if (!armed) return;
-        overlay.classList.remove('visible');
-        overlay.removeEventListener('click', dismiss);
-        overlay.removeEventListener('touchstart', dismiss);
-        window.removeEventListener('keydown', keyDismiss);
-        setTimeout(done, 400);
-      };
-      const keyDismiss = (e) => { e.preventDefault(); dismiss(); };
-      overlay.addEventListener('click', dismiss);
-      overlay.addEventListener('touchstart', dismiss, { passive: true });
-      window.addEventListener('keydown', keyDismiss);
     });
   }
 
